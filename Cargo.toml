@@ -1,0 +1,13 @@
+[package]
+name = "kanji-data"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "update"
+test = false
+
+[dependencies]
+serde = { version = "1.0.204", features = ["derive"] }
+csv = "1.3.0"
+anyhow = "1.0.86"
