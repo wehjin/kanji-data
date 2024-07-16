@@ -1,12 +1,14 @@
-use crate::built::{KA_GLYPHS, KA_MEANINGS};
+use crate::built::*;
 
-pub mod records;
 pub mod built;
 
-pub struct Kanji(pub usize);
-impl Kanji {
+pub struct KanjiData(pub usize);
+impl KanjiData {
 	pub fn as_glyph(&self) -> &'static str { KA_GLYPHS[self.0] }
 	pub fn as_meaning(&self) -> &'static str { KA_MEANINGS[self.0] }
+	pub fn as_onyomi(&self) -> &'static [&'static str] { KA_ONYOMIS[self.0] }
+	pub fn as_kunyomi(&self) -> &'static [&'static str] { KA_KUNYOMIS[self.0] }
+	pub fn len() -> usize { KA_GLYPHS.len() }
 }
 
 #[cfg(test)]

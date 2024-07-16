@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 pub fn parse_kanji() -> Vec<KanjiRecord> {
 	let mut records = vec![];
-	let string = include_str!("../kanji-data-media/language-data/ka_data.csv");
+	let string = include_str!("../../kanji-data-media/language-data/ka_data.csv");
 	let mut reader = csv::Reader::from_reader(string.as_bytes());
 	for result in reader.deserialize() {
 		let record: KanjiRecord = result.expect("record");

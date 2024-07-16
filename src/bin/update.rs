@@ -1,77 +1,67 @@
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Write;
 
-use kanji_data::records::{KanjiRecord, parse_kanji};
+use records::{KanjiRecord, parse_kanji};
 
+use crate::array_code::{array_array_code, array_code, Item, Kind};
 use crate::build_string::BuildString;
 
 pub mod build_string;
-
-fn array_code(name: impl AsRef<str>, values: Vec<String>) -> String {
-	let name = name.as_ref();
-	let build = BuildString::new()
-		.add_line(format!(
-			"pub(crate) const {}: [&'static str;{}] = [",
-			name,
-			values.len()
-		))
-		.add_line_with_take(|mut line_builder| {
-			for val in &values {
-				let line = format!("    \"{}\",", val);
-				line_builder = line_builder.add_line(line);
-			}
-			line_builder
-		})
-		.add_line("];")
-		.add_line("")
-		.to_string()
-		;
-	build
-}
+pub mod array_code;
+pub mod records;
 
 pub fn glyphs_array_code(kanji: impl AsRef<[KanjiRecord]>) -> String {
 	let kanji = kanji.as_ref();
-	let glyphs = kanji.iter().map(|kanji| kanji.kanji.to_string()).collect::<Vec<_>>();
-	let code = array_code("KA_GLYPHS", glyphs);
-	code
+	let values = kanji.iter()
+		.map(|kanji| Item(kanji.kanji.to_string(), Kind::Str))
+		.collect::<Vec<_>>();
+	array_code("KA_GLYPHS", Kind::Str, values)
+}
+pub fn meanings_array_code(kanji: impl AsRef<[KanjiRecord]>) -> String {
+	let kanji = kanji.as_ref();
+	let values = kanji.iter()
+		.map(|kanji| Item(kanji.kmeaning.to_string(), Kind::Str))
+		.collect::<Vec<_>>();
+	array_code("KA_MEANINGS", Kind::Str, values)
+}
+
+pub fn onyomi_array_code(kanji: impl AsRef<[KanjiRecord]>) -> String {
+	let values = kanji.as_ref().iter()
+		.map(|kanji| kanji.onyomi_ja.to_string())
+		.collect::<Vec<_>>();
+	array_array_code("KA_ONYOMIS", values)
+}
+
+pub fn kunyomi_array_code(kanji: impl AsRef<[KanjiRecord]>) -> String {
+	let values = kanji.as_ref().iter()
+		.map(|kanji| kanji.kunyomi_ja.to_string())
+		.collect::<Vec<_>>();
+	array_array_code("KA_KUNYOMIS", values)
 }
 pub fn code(kanji: impl AsRef<[KanjiRecord]>) -> String {
 	let glyphs = glyphs_array_code(&kanji);
 	let meanings = meanings_array_code(&kanji);
+	let onyomis = onyomi_array_code(&kanji);
+	let kunyomis = kunyomi_array_code(&kanji);
 	BuildString::new()
 		.add_line(glyphs)
 		.add_line(meanings)
+		.add_line(onyomis)
+		.add_line(kunyomis)
 		.to_string()
 }
 
-pub fn meanings_array_code(kanji: impl AsRef<[KanjiRecord]>) -> String {
-	let kanji = kanji.as_ref();
-	let values = kanji.iter().map(|kanji| kanji.kmeaning.to_string()).collect::<Vec<_>>();
-	let code = array_code("KA_MEANINGS", values);
-	code
-}
-
 pub fn main() -> anyhow::Result<()> {
-	let path = "src/built.rs";
-	let mut kanji = parse_kanji();
-	kanji.truncate(5);
-	let code = code(kanji);
-	File::create(path)?.write_all(code.as_bytes())?;
-	{
-		let mut file = File::open(path)?;
-		let mut buf = String::new();
-		file.read_to_string(&mut buf)?;
-		print!("{}", &buf);
-	}
+	let code = code(parse_kanji());
+	File::create("src/built.rs")?.write_all(code.as_bytes())?;
 	Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-	mod live {
-		use kanji_data::records::{KanjiRecord, parse_kanji};
-
+	mod shortbox {
 		use crate::code;
+		use crate::records::{KanjiRecord, parse_kanji};
 
 		#[test]
 		fn check_code() {
@@ -86,11 +76,9 @@ mod tests {
 		}
 	}
 	mod sandbox {
-		use kanji_data::records::parse_kanji;
+		use crate::records::parse_kanji;
 
-		use crate::tests::sandbox::built::KA_MEANINGS;
-
-		use self::built::KA_GLYPHS;
+		use self::built::*;
 
 		pub mod built {
 			pub(crate) const KA_GLYPHS: [&'static str; 1] = [
@@ -99,11 +87,15 @@ mod tests {
 			pub(crate) const KA_MEANINGS: [&'static str; 1] = [
 				"show",
 			];
+			pub(crate) const KA_ONYOMIS: [&'static [&'static str]; 1] = [
+				&["シ", "ジ"],
+			];
 		}
-		pub struct SbKanji(pub usize);
-		impl SbKanji {
+		pub struct SbKanjiData(pub usize);
+		impl SbKanjiData {
 			pub fn as_glyph(&self) -> &'static str { KA_GLYPHS[self.0] }
 			pub fn as_meaning(&self) -> &'static str { KA_MEANINGS[self.0] }
+			pub fn as_onyomi(&self) -> &'static [&'static str] { KA_ONYOMIS[self.0] }
 		}
 		#[test]
 		fn check_kanji() {
@@ -111,9 +103,12 @@ mod tests {
 			let record_at_4 = &all[4];
 			dbg!(&record_at_4);
 
-			let kanji = SbKanji(0);
+			let kanji = SbKanjiData(0);
 			assert_eq!(kanji.as_glyph(), "示");
 			assert_eq!(kanji.as_meaning(), "show");
+			assert_eq!(kanji.as_onyomi().len(), 2);
+			assert_eq!(kanji.as_onyomi()[0], "シ");
+			assert_eq!(kanji.as_onyomi()[1], "ジ");
 		}
 	}
 }
