@@ -2,6 +2,7 @@ use crate::built::*;
 
 pub mod built;
 
+#[derive(Debug, Copy, Clone)]
 pub struct KanjiData(pub usize);
 impl KanjiData {
 	pub fn as_glyph(&self) -> &'static str { KA_GLYPHS[self.0] }
