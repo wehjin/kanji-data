@@ -1,5 +1,7 @@
+use std::env::current_dir;
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 
 use records::{KanjiRecord, parse_kanji};
 
@@ -52,9 +54,18 @@ pub fn code(kanji: impl AsRef<[KanjiRecord]>) -> String {
 }
 
 pub fn main() -> anyhow::Result<()> {
+	let out_path = out_dir()?.join("built.rs");
 	let code = code(parse_kanji());
-	File::create("src/built.rs")?.write_all(code.as_bytes())?;
+	File::create(out_path.clone())?.write_all(code.as_bytes())?;
+	println!("Wrote to {}", out_path.to_str().unwrap());
 	Ok(())
+}
+
+fn out_dir() -> anyhow::Result<PathBuf> {
+	let current_dir = current_dir()?;
+	let src_dir = current_dir.join("src");
+	let write_dir = if src_dir.is_dir() { src_dir } else { current_dir };
+	Ok(write_dir)
 }
 
 #[cfg(test)]
