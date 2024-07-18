@@ -1,4 +1,5 @@
 use clap::Parser;
+use itertools::Itertools;
 
 use kanji_data::KanjiData;
 
@@ -6,18 +7,45 @@ use kanji_data::KanjiData;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-	/// Print the glyphs count.
+	/// Print the glyph count.
 	#[clap(short, long, default_value_t = false)]
 	count: bool,
+	/// Print the onyomi.
+	#[clap(short, long, default_value_t = false)]
+	onyo: bool,
 }
 
 fn main() -> anyhow::Result<()> {
 	let args = Args::parse();
-	if args.count {
-		emit_length()
+	let count = args.count;
+	if args.onyo {
+		emit_onyo(count);
+	} else {
+		if count {
+			emit_length()
+		}
+		emit_glyphs();
 	}
-	emit_glyphs();
 	Ok(())
+}
+
+fn emit_onyo(count: bool) {
+	let mut glyphs = (0..KanjiData::len())
+		.into_iter()
+		.map(KanjiData)
+		.map(|data| {
+			data.as_onyomi().iter().map(|&it| it.to_string()).collect::<Vec<_>>()
+		})
+		.flatten()
+		.unique()
+		.filter(|it| !it.is_empty())
+		.collect::<Vec<_>>()
+		;
+	glyphs.sort();
+	println!("{}", glyphs.join(", "));
+	if count {
+		println!("{}", glyphs.len());
+	}
 }
 
 fn emit_length() {
