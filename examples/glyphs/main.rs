@@ -42,9 +42,17 @@ fn emit_onyo(count: bool) {
 		.collect::<Vec<_>>()
 		;
 	glyphs.sort();
-	println!("{}", glyphs.join(", "));
+	let glyphs_len = glyphs.len();
+	let grouped = glyphs.into_iter().into_group_map_by(|it| it.chars().next().unwrap().to_string());
+	let keys = grouped.keys().sorted().collect::<Vec<_>>();
+	for key in keys.clone() {
+		let group = grouped.get(key).unwrap();
+		println!("(\"{}\", [\"{}\";{}]),", key, group.join("\",\""), group.len());
+	}
+	let keys = keys.into_iter().cloned().collect::<Vec<_>>();
+	println!("[ \"{}\";{} ]", keys.join("\",\""), keys.len());
 	if count {
-		println!("{}", glyphs.len());
+		println!("{} onyomi", glyphs_len);
 	}
 }
 
