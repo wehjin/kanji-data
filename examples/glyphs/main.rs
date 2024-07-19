@@ -13,13 +13,18 @@ struct Args {
 	/// Print the onyomi.
 	#[clap(short, long, default_value_t = false)]
 	onyo: bool,
+	/// Print without quotes.
+	#[clap(short, long, default_value_t = false)]
+	plain: bool,
 }
 
 fn main() -> anyhow::Result<()> {
 	let args = Args::parse();
+	let plain = args.plain;
 	let count = args.count;
-	if args.onyo {
-		emit_onyo(count);
+	let onyo = args.onyo;
+	if onyo {
+		emit_onyo(count, plain);
 	} else {
 		if count {
 			emit_length()
@@ -29,7 +34,7 @@ fn main() -> anyhow::Result<()> {
 	Ok(())
 }
 
-fn emit_onyo(count: bool) {
+fn emit_onyo(count: bool, plain: bool) {
 	let mut glyphs = (0..KanjiData::len())
 		.into_iter()
 		.map(KanjiData)
@@ -47,10 +52,14 @@ fn emit_onyo(count: bool) {
 	let keys = grouped.keys().sorted().collect::<Vec<_>>();
 	for key in keys.clone() {
 		let group = grouped.get(key).unwrap();
-		println!("(\"{}\", [\"{}\";{}]),", key, group.join("\",\""), group.len());
+		println!("( \"{}\", [\"{}\"; {}] ),", key, group.join("\",\""), group.len());
 	}
 	let keys = keys.into_iter().cloned().collect::<Vec<_>>();
-	println!("[ \"{}\";{} ]", keys.join("\",\""), keys.len());
+	if plain {
+		println!("{}", keys.join(""));
+	} else {
+		println!("[ \"{}\"; {} ]", keys.join("\",\""), keys.len());
+	}
 	if count {
 		println!("{} onyomi", glyphs_len);
 	}
