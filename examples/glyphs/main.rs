@@ -45,7 +45,6 @@ fn emit_kana(count: bool) {
 	let chars = strings.into_iter().collect::<String>().chars().into_iter()
 		.unique()
 		.sorted()
-		.rev()
 		.collect::<Vec<_>>();
 	let len = chars.len();
 	let string = chars.into_iter().collect::<String>();
