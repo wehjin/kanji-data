@@ -90,9 +90,11 @@ fn get_sorted_unique_strings(f: impl Fn(KanjiData) -> Vec<String>) -> Vec<String
 
 fn get_yomi_and_meaning_strings(data: KanjiData) -> Vec<String> {
 	let meaning = data.as_meaning().to_string();
+	let lowercase = meaning.to_lowercase();
+	let uppercase = meaning.to_uppercase();
 	let onyomi = get_onyomi_strings(data);
 	let kunyomi = get_kunyomi_strings(data);
-	let mut together = vec![meaning];
+	let mut together = vec![lowercase, uppercase];
 	together.extend(onyomi);
 	together.extend(kunyomi);
 	together
