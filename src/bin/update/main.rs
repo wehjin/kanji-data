@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-use records::{KanjiRecord, parse_kanji};
+use kanji_data::records::{KanjiRecord, parse_kanji};
 
 use crate::array_code::{array_array_code, array_code, Item, Kind};
 use crate::build_string::BuildString;
@@ -71,8 +71,9 @@ fn out_dir() -> anyhow::Result<PathBuf> {
 #[cfg(test)]
 mod tests {
 	mod shortbox {
+		use kanji_data::records::{KanjiRecord, parse_kanji};
+
 		use crate::code;
-		use crate::records::{KanjiRecord, parse_kanji};
 
 		#[test]
 		fn check_code() {
@@ -87,7 +88,7 @@ mod tests {
 		}
 	}
 	mod sandbox {
-		use crate::records::parse_kanji;
+		use kanji_data::records::parse_kanji;
 
 		use self::built::*;
 

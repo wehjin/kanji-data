@@ -19,6 +19,12 @@ fn check_kanji() {
 	assert_eq!(kanji.as_onyomi()[0], "イチ");
 	assert_eq!(kanji.as_kunyomi().len(), 1);
 	assert_eq!(kanji.as_kunyomi()[0], "ひと");
+
+	let examples = kanji.as_examples();
+	assert_eq!(examples.len(), 9);
+	assert_eq!(examples[0].kanji, "一年生");
+	assert_eq!(examples[0].sound, "いちねんせい");
+	assert_eq!(examples[0].meaning, "first-year student");
 }
 
 #[test]
