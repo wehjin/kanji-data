@@ -28,7 +28,7 @@ fn main() -> anyhow::Result<()> {
 	let onyo = args.onyo;
 	let non_kanji = args.non_kanji;
 	if non_kanji {
-		emit_kana(count);
+		emit_non_kanji(count);
 	} else if onyo {
 		emit_onyo(count, plain);
 	} else {
@@ -40,7 +40,7 @@ fn main() -> anyhow::Result<()> {
 	Ok(())
 }
 
-fn emit_kana(count: bool) {
+fn emit_non_kanji(count: bool) {
 	let strings = get_sorted_unique_strings(get_yomi_and_meaning_strings);
 	let chars = strings.into_iter().collect::<String>().chars().into_iter()
 		.unique()
@@ -89,14 +89,32 @@ fn get_sorted_unique_strings(f: impl Fn(KanjiData) -> Vec<String>) -> Vec<String
 
 fn get_yomi_and_meaning_strings(data: KanjiData) -> Vec<String> {
 	let meaning = data.as_meaning().to_string();
-	let lowercase = meaning.to_lowercase();
-	let uppercase = meaning.to_uppercase();
 	let onyomi = get_onyomi_strings(data);
 	let kunyomi = get_kunyomi_strings(data);
-	let mut together = vec![lowercase, uppercase];
+	let examples = {
+		let mut strings = Vec::new();
+		for example in data.as_examples() {
+			let string = format!("{:?}", example);
+			strings.push(string);
+		}
+		strings
+	};
+	let mut together = to_lower_upper(vec![meaning]);
 	together.extend(onyomi);
 	together.extend(kunyomi);
+	together.extend(to_lower_upper(examples));
 	together
+}
+
+fn to_lower_upper(strings: Vec<String>) -> Vec<String> {
+	let mut lower_upper = Vec::new();
+	for string in strings {
+		let lower = string.to_lowercase();
+		let upper = string.to_uppercase();
+		lower_upper.push(lower);
+		lower_upper.push(upper);
+	}
+	lower_upper
 }
 
 fn get_onyomi_strings(data: KanjiData) -> Vec<String> {
