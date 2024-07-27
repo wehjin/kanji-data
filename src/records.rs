@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use serde::Deserialize;
 
 pub fn parse_kanji() -> Vec<KanjiRecord> {
@@ -8,6 +10,32 @@ pub fn parse_kanji() -> Vec<KanjiRecord> {
 		let record: KanjiRecord = result.expect("record");
 		records.push(record);
 	}
+	records.sort_by(|a, b| {
+		match a.kstroke.cmp(&b.kstroke) {
+			Ordering::Less => Ordering::Less,
+			Ordering::Equal => {
+				let grade = (a.kgrade.parse::<usize>(), b.kgrade.parse::<usize>());
+				let cmp_grade = match grade {
+					(Ok(a), Ok(b)) => a.cmp(&b),
+					(Ok(_), Err(_)) => Ordering::Less,
+					(Err(_), Ok(_)) => Ordering::Greater,
+					(Err(_), Err(_)) => Ordering::Equal
+				};
+				match cmp_grade {
+					Ordering::Less => Ordering::Less,
+					Ordering::Equal => {
+						match a.kmeaning.len().cmp(&b.kmeaning.len()) {
+							Ordering::Less => Ordering::Less,
+							Ordering::Equal => a.kanji.cmp(&b.kanji),
+							Ordering::Greater => Ordering::Greater,
+						}
+					}
+					Ordering::Greater => Ordering::Greater,
+				}
+			}
+			Ordering::Greater => Ordering::Greater,
+		}
+	});
 	records
 }
 
